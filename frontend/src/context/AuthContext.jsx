@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data.user);
             return { success: true, user: data.user };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || 'Login failed.' };
+            return { success: false, message: err.response?.data?.message, fallbackKey: 'auth.loginFailed' };
         } finally {
             setLoading(false);
         }
@@ -40,7 +40,23 @@ export const AuthProvider = ({ children }) => {
             setUser(data.user);
             return { success: true, user: data.user };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || 'Registration failed.' };
+            return { success: false, message: err.response?.data?.message, fallbackKey: 'auth.registerFailed' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const googleLogin = async (credential) => {
+        setLoading(true);
+        try {
+            const { data } = await api.post('/auth/google', { credential });
+            localStorage.setItem('ce_token', data.token);
+            localStorage.setItem('ce_user', JSON.stringify(data.user));
+            setToken(data.token);
+            setUser(data.user);
+            return { success: true, user: data.user };
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message, fallbackKey: 'auth.loginFailed' };
         } finally {
             setLoading(false);
         }
@@ -54,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, isReady, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, isReady, login, register, googleLogin, logout }}>
             {children}
         </AuthContext.Provider>
     );

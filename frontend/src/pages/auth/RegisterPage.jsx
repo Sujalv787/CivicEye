@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle, TrainFront } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
-    const { register, loading } = useAuth();
+    const { register, googleLogin, loading } = useAuth();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -21,36 +24,51 @@ export default function RegisterPage() {
         e.preventDefault();
         setError('');
         if (form.password.length < 8) {
-            setError('Password must be at least 8 characters.');
+            setError(t('register.passwordMinLength'));
             return;
         }
         const result = await register(form.name, form.email, form.password);
         if (result.success) {
-            toast.success(`Welcome, ${result.user.name}! Account created successfully.`);
+            toast.success(t('register.welcomeToast', { name: result.user.name }));
             if (redirectFrom) {
                 navigate(redirectFrom, { replace: true });
             } else {
                 navigate('/dashboard', { replace: true });
             }
         } else {
-            setError(result.message);
+            setError(result.message || t(result.fallbackKey));
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setError('');
+        const result = await googleLogin(credentialResponse.credential);
+        if (result.success) {
+            toast.success(t('register.welcomeToast', { name: result.user.name }));
+            if (redirectFrom) {
+                navigate(redirectFrom, { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
+        } else {
+            setError(result.message || t(result.fallbackKey));
         }
     };
 
     const strength = form.password.length >= 12 ? 3 : form.password.length >= 8 ? 2 : form.password.length >= 4 ? 1 : 0;
     const strengthColor = ['bg-slate-200', 'bg-red-400', 'bg-amber-400', 'bg-emerald-500'][strength];
-    const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength];
+    const strengthLabel = ['', t('register.weak'), t('register.fair'), t('register.strong')][strength];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-orange-950 to-slate-900 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
                 <div className="bg-white rounded-2xl shadow-2xl p-8">
                     <div className="text-center mb-8">
-                        <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4">
-                            <Eye size={22} className="text-white" />
+                        <div className="w-12 h-12 rounded-xl bg-orange-600 flex items-center justify-center mx-auto mb-4">
+                            <TrainFront size={22} className="text-white" />
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-                        <p className="text-slate-500 text-sm mt-1">Join CivicEye as a citizen reporter</p>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('register.createAccount')}</h1>
+                        <p className="text-slate-500 text-sm mt-1">{t('register.joinCivicEye')}</p>
                     </div>
 
                     {error && (
@@ -61,31 +79,31 @@ export default function RegisterPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('register.fullName')}</label>
                             <input
                                 type="text"
                                 name="name"
                                 value={form.name}
                                 onChange={handleChange}
                                 required
-                                placeholder="Ravi Kumar"
-                                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder={t('register.namePlaceholder')}
+                                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('common.email')}</label>
                             <input
                                 type="email"
                                 name="email"
                                 value={form.email}
                                 onChange={handleChange}
                                 required
-                                placeholder="you@example.com"
-                                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder={t('register.emailPlaceholder')}
+                                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('common.password')}</label>
                             <div className="relative">
                                 <input
                                     type={showPass ? 'text' : 'password'}
@@ -93,8 +111,8 @@ export default function RegisterPage() {
                                     value={form.password}
                                     onChange={handleChange}
                                     required
-                                    placeholder="Min. 8 characters"
-                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                                    placeholder={t('register.passwordPlaceholder')}
+                                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
                                 />
                                 <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -112,28 +130,46 @@ export default function RegisterPage() {
                             )}
                         </div>
 
-                        <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700 space-y-1">
-                            <p className="font-medium">By registering you agree that:</p>
-                            <p>• Only verified evidence-based reports will be accepted</p>
-                            <p>• False reports are prohibited and may lead to account suspension</p>
-                            <p>• CivicEye is an independent platform, not affiliated with any govt. body</p>
+                        <div className="bg-orange-50 rounded-lg p-3 text-xs text-orange-700 space-y-1">
+                            <p className="font-medium">{t('register.agreementTitle')}</p>
+                            <p>• {t('register.agreementOne')}</p>
+                            <p>• {t('register.agreementTwo')}</p>
+                            <p>• {t('register.agreementThree')}</p>
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition text-sm"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-semibold rounded-lg transition text-sm"
                         >
-                            {loading ? 'Creating account...' : <><span>Create Account</span> <ArrowRight size={16} /></>}
+                            {loading ? t('register.creatingAccount') : <><span>{t('register.createAccountBtn')}</span> <ArrowRight size={16} /></>}
                         </button>
                     </form>
 
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 my-6">
+                        <div className="flex-1 h-px bg-slate-200" />
+                        <span className="text-xs font-medium text-slate-400 uppercase">{t('login.orContinueWith')}</span>
+                        <div className="flex-1 h-px bg-slate-200" />
+                    </div>
+
+                    {/* Google Sign-In */}
+                    <div className="flex justify-center">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => setError(t('login.googleFailed'))}
+                            text="continue_with"
+                            shape="rectangular"
+                            width="100%"
+                        />
+                    </div>
+
                     <p className="text-center text-sm text-slate-500 mt-6">
-                        Already have an account?{' '}
-                        <Link to="/login" className="text-blue-600 font-medium hover:underline">Sign in</Link>
+                        {t('register.alreadyHaveAccount')}{' '}
+                        <Link to="/login" className="text-orange-600 font-medium hover:underline">{t('common.signIn')}</Link>
                     </p>
                     <p className="text-center text-xs text-slate-400 mt-2">
-                        <Link to="/" className="hover:underline">← Back to home</Link>
+                        <Link to="/" className="hover:underline">{t('common.backToHome')}</Link>
                     </p>
                 </div>
             </div>

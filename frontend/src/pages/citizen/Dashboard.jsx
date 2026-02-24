@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTrainLoader } from '../../context/TrainLoaderContext';
+import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18n/localeMap';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,18 +11,12 @@ import {
     FileText, Clock, CheckCircle, XCircle,
     PlusCircle, ArrowRight, Copy, X, Sparkles
 } from 'lucide-react';
-
-const STATUS_STYLES = {
-    'Under Review': 'bg-blue-100 text-blue-700',
-    'Investigating': 'bg-amber-100 text-amber-700',
-    'Action Taken': 'bg-purple-100 text-purple-700',
-    'Resolved': 'bg-emerald-100 text-emerald-700',
-    'Rejected': 'bg-red-100 text-red-700',
-};
+import { STATUS_STYLES, STATUS_T_KEYS } from '../../utils/statusConfig';
 
 export default function CitizenDashboard() {
     const { user } = useAuth();
     const { showLoader } = useTrainLoader();
+    const { t, i18n } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState([]);
@@ -62,6 +58,8 @@ export default function CitizenDashboard() {
         rejected: complaints.filter(c => c.status === 'Rejected').length,
     };
 
+    const locale = getLocale(i18n.language);
+
     return (
         <DashboardLayout>
             {/* ── New Report Success Banner ── */}
@@ -84,10 +82,10 @@ export default function CitizenDashboard() {
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                                 <p className="text-emerald-100 font-bold text-lg leading-tight mb-0.5">
-                                    🎉 Report Submitted Successfully!
+                                    {t('citizenDash.reportSubmitted')}
                                 </p>
                                 <p className="text-emerald-300 text-sm">
-                                    Your grievance is under review. Save your Ticket ID below.
+                                    {t('citizenDash.grievanceUnderReview')}
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="font-mono text-xl font-black text-white tracking-widest">
@@ -101,7 +99,7 @@ export default function CitizenDashboard() {
                                         <Copy size={15} />
                                     </button>
                                     {copied && (
-                                        <span className="text-xs text-emerald-300 font-medium">Copied!</span>
+                                        <span className="text-xs text-emerald-300 font-medium">{t('common.copied')}</span>
                                     )}
                                 </div>
                             </div>
@@ -112,7 +110,7 @@ export default function CitizenDashboard() {
                                     to="/track"
                                     className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl transition"
                                 >
-                                    Track Report
+                                    {t('common.trackReport')}
                                 </Link>
                                 <button
                                     onClick={() => {
@@ -140,24 +138,24 @@ export default function CitizenDashboard() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Welcome, {user?.name} 👋</h1>
-                    <p className="text-slate-500 text-sm mt-1">Here's an overview of your submitted reports.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">{t('citizenDash.welcome', { name: user?.name })}</h1>
+                    <p className="text-slate-500 text-sm mt-1">{t('citizenDash.overview')}</p>
                 </div>
                 <button
                     onClick={() => showLoader(() => navigate('/report'))}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition"
                 >
-                    <PlusCircle size={16} /> File a Report
+                    <PlusCircle size={16} /> {t('citizenDash.fileReport')}
                 </button>
             </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                 {[
-                    { label: 'Total Reports', value: stats.total, icon: FileText, color: 'text-blue-600 bg-blue-50' },
-                    { label: 'Under Review', value: stats.underReview, icon: Clock, color: 'text-amber-600 bg-amber-50' },
-                    { label: 'Resolved', value: stats.resolved, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' },
-                    { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'text-red-600 bg-red-50' },
+                    { label: t('citizenDash.totalReports'), value: stats.total, icon: FileText, color: 'text-orange-600 bg-orange-50' },
+                    { label: t('citizenDash.underReview'), value: stats.underReview, icon: Clock, color: 'text-amber-600 bg-amber-50' },
+                    { label: t('citizenDash.resolved'), value: stats.resolved, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' },
+                    { label: t('citizenDash.rejected'), value: stats.rejected, icon: XCircle, color: 'text-red-600 bg-red-50' },
                 ].map((s) => (
                     <div key={s.label} className="bg-white rounded-xl border border-slate-200 p-5">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${s.color}`}>
@@ -172,30 +170,30 @@ export default function CitizenDashboard() {
             {/* Complaints table */}
             <div className="bg-white rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h2 className="font-semibold text-slate-900">My Reports</h2>
-                    <Link to="/track" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                        Track Report <ArrowRight size={14} />
+                    <h2 className="font-semibold text-slate-900">{t('citizenDash.myReports')}</h2>
+                    <Link to="/track" className="text-sm text-orange-600 hover:underline flex items-center gap-1">
+                        {t('common.trackReport')} <ArrowRight size={14} />
                     </Link>
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-16 text-slate-400">Loading...</div>
+                    <div className="flex items-center justify-center py-16 text-slate-400">{t('common.loading')}</div>
                 ) : complaints.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <FileText size={40} className="mb-3 opacity-30" />
-                        <p className="text-sm">No reports submitted yet.</p>
-                        <button onClick={() => showLoader(() => navigate('/report'))} className="mt-3 text-sm text-blue-600 hover:underline">Submit your first report →</button>
+                        <p className="text-sm">{t('citizenDash.noReports')}</p>
+                        <button onClick={() => showLoader(() => navigate('/report'))} className="mt-3 text-sm text-orange-600 hover:underline">{t('citizenDash.submitFirst')}</button>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-100">
-                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">Ticket ID</th>
-                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">Route</th>
-                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">Category</th>
-                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">Status</th>
-                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">Date</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">{t('citizenDash.ticketId')}</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">{t('citizenDash.route')}</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">{t('citizenDash.category')}</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">{t('citizenDash.statusLabel')}</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-medium">{t('citizenDash.date')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -211,12 +209,12 @@ export default function CitizenDashboard() {
                                         >
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-mono font-bold text-xs ${isNew ? 'text-emerald-700' : 'text-blue-700'}`}>
+                                                    <span className={`font-mono font-bold text-xs ${isNew ? 'text-emerald-700' : 'text-orange-700'}`}>
                                                         {c.ticketId || '—'}
                                                     </span>
                                                     {isNew && (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white">
-                                                            NEW
+                                                            {t('common.new')}
                                                         </span>
                                                     )}
                                                 </div>
@@ -228,11 +226,11 @@ export default function CitizenDashboard() {
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">{c.complaintCategory || '—'}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[c.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                    {c.status}
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[c.status]?.pill || 'bg-slate-100 text-slate-600'}`}>
+                                                    {t(STATUS_T_KEYS[c.status]) || c.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500">{new Date(c.createdAt).toLocaleDateString('en-IN')}</td>
+                                            <td className="px-6 py-4 text-slate-500">{new Date(c.createdAt).toLocaleDateString(locale)}</td>
                                         </tr>
                                     );
                                 })}

@@ -1,19 +1,40 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import {
     User, MapPin, Calendar, Clock, Tag, BarChart2, Upload,
-    Hash, ArrowRight, ArrowLeft, CheckCircle, Train, AlertTriangle, Copy, Loader2
+    Hash, ArrowRight, ArrowLeft, CheckCircle, Train, AlertTriangle, Copy, Loader2, Edit3
 } from 'lucide-react';
 import { useTrainLoader } from '../../context/TrainLoaderContext';
+import VoiceInputButton from '../../components/VoiceInputButton';
 
-// ── Q&A Step definitions ───────────────────────────────────────────────────
-const TOTAL_STEPS = 9;
+// ── Step count ──────────────────────────────────────────────────────────────
+const TOTAL_STEPS = 8;
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_FILE_TYPES = ['image/', 'video/', 'audio/'];
+
+// Category options: value is sent to backend (English), tKey is for display
+const CATEGORY_KEYS = [
+    { value: 'Overcharging', tKey: 'categories.overcharging' },
+    { value: 'Misbehavior', tKey: 'categories.misbehavior' },
+    { value: 'Hygiene Issue', tKey: 'categories.hygieneIssue' },
+    { value: 'Other', tKey: 'categories.other' },
+];
+
+// Degree options: value is sent to backend (English), tKey/descKey are for display
+const DEGREE_KEYS = [
+    { value: 'Minor', tKey: 'degree.minor', descKey: 'degree.minorDesc', color: 'border-emerald-500 text-emerald-400' },
+    { value: 'Moderate', tKey: 'degree.moderate', descKey: 'degree.moderateDesc', color: 'border-amber-500 text-amber-400' },
+    { value: 'Serious', tKey: 'degree.serious', descKey: 'degree.seriousDesc', color: 'border-rose-500 text-rose-400' },
+];
 
 // ── Loader overlay ─────────────────────────────────────────────────────────
 function EvaluatingLoader() {
+    const { t } = useTranslation();
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -25,17 +46,17 @@ function EvaluatingLoader() {
             <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }}
-                className="w-16 h-16 rounded-full border-4 border-white/10 border-t-blue-400 mb-8"
+                className="w-16 h-16 rounded-full border-4 border-white/10 border-t-orange-400 mb-8"
             />
-            <h2 className="text-2xl font-bold text-white mb-2">Evaluating Your Report</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('complaint.evaluatingTitle')}</h2>
             <p className="text-slate-400 text-center max-w-xs">
-                Your report is being evaluated…
+                {t('complaint.evaluatingSubtitle')}
             </p>
             <div className="flex gap-1 mt-6">
                 {[0, 1, 2].map((i) => (
                     <motion.div
                         key={i}
-                        className="w-2 h-2 rounded-full bg-blue-400"
+                        className="w-2 h-2 rounded-full bg-orange-400"
                         animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
                         transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                     />
@@ -48,6 +69,7 @@ function EvaluatingLoader() {
 // ── Success screen ─────────────────────────────────────────────────────────
 function SuccessScreen({ ticketId }) {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
     const copy = () => {
@@ -72,36 +94,36 @@ function SuccessScreen({ ticketId }) {
                 >
                     <CheckCircle size={40} className="text-emerald-400" />
                 </motion.div>
-                <h2 className="text-3xl font-black text-white mb-3">Your report has been submitted successfully.</h2>
-                <p className="text-slate-400 mb-8">Your grievance is now under review by the relevant authority.</p>
+                <h2 className="text-3xl font-black text-white mb-3">{t('complaint.successTitle')}</h2>
+                <p className="text-slate-400 mb-8">{t('complaint.successSubtitle')}</p>
 
                 {/* Ticket ID */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
-                    <p className="text-sm text-slate-400 mb-2">Your Ticket ID</p>
+                    <p className="text-sm text-slate-400 mb-2">{t('complaint.yourTicketId')}</p>
                     <div className="flex items-center justify-center gap-3">
-                        <span className="font-mono text-3xl font-black text-blue-400 tracking-widest">
+                        <span className="font-mono text-3xl font-black text-orange-400 tracking-widest">
                             {ticketId}
                         </span>
                         <button onClick={copy} className="p-2 rounded-lg hover:bg-white/10 transition text-slate-400 hover:text-white">
                             <Copy size={18} />
                         </button>
                     </div>
-                    {copied && <p className="text-xs text-emerald-400 mt-2">Copied!</p>}
+                    {copied && <p className="text-xs text-emerald-400 mt-2">{t('common.copied')}</p>}
                 </div>
-                <p className="text-xs text-slate-500 mb-8">Save this ID to track your complaint status anytime.</p>
+                <p className="text-xs text-slate-500 mb-8">{t('complaint.saveTicketId')}</p>
 
                 <div className="flex gap-3">
                     <button
                         onClick={() => navigate('/track', { state: { ticketId }, replace: true })}
-                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition"
+                        className="flex-1 py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl transition"
                     >
-                        Track Status
+                        {t('complaint.trackStatus')}
                     </button>
                     <button
                         onClick={() => navigate('/dashboard', { state: { newTicketId: ticketId }, replace: true })}
                         className="flex-1 py-3 bg-white/8 hover:bg-white/12 text-white font-semibold rounded-xl border border-white/15 transition"
                     >
-                        My Dashboard
+                        {t('complaint.myDashboard')}
                     </button>
                 </div>
             </div>
@@ -121,23 +143,37 @@ function QuestionCard({ children, title, subtitle }) {
 }
 
 // ── Step inputs ───────────────────────────────────────────────────────────
-const INPUT_CLS = 'w-full px-4 py-3 bg-white/8 border border-white/15 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm';
+const INPUT_CLS = 'w-full px-4 py-3 bg-white/8 border border-white/15 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 transition text-sm';
 
-const CATEGORY_OPTIONS = ['Overcharging', 'Misbehavior', 'Hygiene Issue', 'Other'];
-const DEGREE_OPTIONS = [
-    { value: 'Minor', desc: 'Minor inconvenience, no harm caused', color: 'border-emerald-500 text-emerald-400' },
-    { value: 'Moderate', desc: 'Noticeable issue that affected your journey', color: 'border-amber-500 text-amber-400' },
-    { value: 'Serious', desc: 'Severe — safety risk or major misconduct', color: 'border-rose-500 text-rose-400' },
-];
+// ── Review field row ──────────────────────────────────────────────────────
+function ReviewRow({ label, value, icon: Icon, onEdit }) {
+    return (
+        <div className="flex items-center justify-between py-3 border-b border-white/8 last:border-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+                {Icon && <Icon size={14} className="text-slate-400 shrink-0" />}
+                <div className="min-w-0">
+                    <p className="text-xs text-slate-500">{label}</p>
+                    <p className="text-sm text-white font-medium truncate">{value || '—'}</p>
+                </div>
+            </div>
+            {onEdit && (
+                <button onClick={onEdit} className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 shrink-0 ml-3">
+                    <Edit3 size={12} />
+                </button>
+            )}
+        </div>
+    );
+}
 
 // ── Main component ──────────────────────────────────────────────────────────
 export default function ComplaintForm() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { showLoader } = useTrainLoader();
     const fileRef = useRef();
 
     const [step, setStep] = useState(1);
-    const [dir, setDir] = useState(1); // 1 = forward, -1 = backward
+    const [dir, setDir] = useState(1);
     const [answers, setAnswers] = useState({
         name: '',
         sourceStation: '',
@@ -162,6 +198,10 @@ export default function ComplaintForm() {
 
     const setAnswer = (key, val) => setAnswers((prev) => ({ ...prev, [key]: val }));
 
+    const goTo = (target) => {
+        setDir(target > step ? 1 : -1);
+        setStep(target);
+    };
     const goNext = () => {
         setDir(1);
         setStep((s) => Math.min(s + 1, TOTAL_STEPS));
@@ -172,32 +212,102 @@ export default function ComplaintForm() {
         setPnrError('');
     };
 
-    // Can current step proceed?
+    // Handle Enter key to advance steps or trigger actions
+    const stateRef = useRef();
+    stateRef.current = { step, answers, pnrVerified, pnrVerifying, submitting };
+
+    const canProceedFor = (s, a, pv) => {
+        if (s === 1) return a.name.trim().length > 0;
+        if (s === 2) return a.sourceStation.trim().length > 0 && a.destinationStation.trim().length > 0;
+        if (s === 3) return a.dateOfTravel !== '' && a.timeOfIncident !== '';
+        if (s === 4) return a.category !== '' && (a.category !== 'Other' || a.categoryOther.trim().length > 0);
+        if (s === 5) return a.degree !== '';
+        if (s === 6) return a.evidenceFile !== null;
+        if (s === 7) return a.pnr.length === 10 && pv;
+        if (s === 8) return pv;
+        return true;
+    };
+
+    const actionsRef = useRef();
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key !== 'Enter') return;
+            if (e.target.tagName === 'TEXTAREA') return;
+
+            e.preventDefault();
+
+            const { step: s, answers: a, pnrVerified: pv, pnrVerifying: pvg, submitting: sub } = stateRef.current;
+            const actions = actionsRef.current;
+
+            // On PNR step, Enter triggers verify if not yet verified
+            if (s === 7 && !pv && !pvg && a.pnr.length === 10) {
+                actions.handleVerifyPNR();
+                return;
+            }
+
+            // On last step, Enter submits
+            if (s === TOTAL_STEPS && pv && !sub) {
+                actions.handleSubmit();
+                return;
+            }
+
+            // Otherwise advance to next step if valid
+            if (s < TOTAL_STEPS && canProceedFor(s, a, pv)) {
+                actions.goNext();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    // Steps:
+    // 1 = Name
+    // 2 = Route (source + destination combined)
+    // 3 = Date + Time (combined)
+    // 4 = Category
+    // 5 = Degree
+    // 6 = Upload evidence
+    // 7 = PNR verification
+    // 8 = Review & Submit
+
     const canProceed = () => {
         if (step === 1) return answers.name.trim().length > 0;
-        if (step === 2) return answers.sourceStation.trim().length > 0;
-        if (step === 3) return answers.destinationStation.trim().length > 0;
-        if (step === 4) return answers.dateOfTravel !== '';
-        if (step === 5) return answers.timeOfIncident !== '';
-        if (step === 6) return answers.category !== '' && (answers.category !== 'Other' || answers.categoryOther.trim().length > 0);
-        if (step === 7) return answers.degree !== '';
-        if (step === 8) return answers.evidenceFile !== null;
-        if (step === 9) return answers.pnr.length === 10 && pnrVerified;
+        if (step === 2) return answers.sourceStation.trim().length > 0 && answers.destinationStation.trim().length > 0;
+        if (step === 3) return answers.dateOfTravel !== '' && answers.timeOfIncident !== '';
+        if (step === 4) return answers.category !== '' && (answers.category !== 'Other' || answers.categoryOther.trim().length > 0);
+        if (step === 5) return answers.degree !== '';
+        if (step === 6) return answers.evidenceFile !== null;
+        if (step === 7) return answers.pnr.length === 10 && pnrVerified;
+        if (step === 8) return pnrVerified; // Review step — just needs PNR verified
         return true;
     };
 
     const handleFileChange = (e) => {
         const f = e.target.files[0];
         if (!f) return;
+
+        // Validate file size
+        if (f.size > MAX_FILE_SIZE) {
+            toast.error(t('complaint.maxFileSize'));
+            return;
+        }
+
+        // Validate file type
+        if (!ALLOWED_FILE_TYPES.some((type) => f.type.startsWith(type))) {
+            toast.error(t('complaint.invalidFileType'));
+            return;
+        }
+
         setAnswer('evidenceFile', f);
         setAnswer('evidenceMime', f.type);
         setAnswer('evidencePreview', URL.createObjectURL(f));
     };
 
-    // Verify PNR against backend
-    const handleVerifyPNR = async () => {
+    const handleVerifyPNR = async (retryCount = 0) => {
         if (!/^\d{10}$/.test(answers.pnr)) {
-            setPnrError('PNR must be exactly 10 digits.');
+            setPnrError(t('complaint.pnrDigitsError'));
             return;
         }
 
@@ -209,40 +319,58 @@ export default function ComplaintForm() {
             const { data } = await api.post('/pnr/verify', { pnr: answers.pnr });
             if (data.verified) {
                 setPnrVerified(true);
-                toast.success('PNR verified successfully!');
+                toast.success(t('complaint.pnrSuccess'));
             } else {
-                setPnrError(data.message || 'PNR verification failed.');
+                setPnrError(data.message || t('complaint.pnrFailed'));
             }
         } catch (err) {
-            setPnrError(err.response?.data?.message || 'PNR not found in the system. Please check and try again.');
+            const status = err.response?.status;
+            const message = err.response?.data?.message;
+
+            // Network error or server down — auto-retry once
+            if (!err.response && retryCount < 1) {
+                await new Promise((r) => setTimeout(r, 1000));
+                return handleVerifyPNR(retryCount + 1);
+            }
+
+            if (status === 429) {
+                setPnrError(message || t('complaint.tooManyRequests'));
+            } else if (status === 401) {
+                setPnrError(t('complaint.sessionExpired'));
+            } else if (status === 404) {
+                setPnrError(message || t('complaint.pnrNotFound'));
+            } else if (!err.response) {
+                setPnrError(t('complaint.networkError'));
+            } else {
+                setPnrError(message || t('complaint.pnrFailed'));
+            }
         } finally {
             setPnrVerifying(false);
         }
     };
 
-    // Final submission after PNR validated
     const handleSubmit = async () => {
         if (!pnrVerified) {
-            setPnrError('Please verify your PNR first.');
+            setPnrError(t('complaint.pnrVerifyFirst'));
             return;
         }
 
         setEvaluating(true);
-        await new Promise((r) => setTimeout(r, 2200)); // Show evaluating loader
+        await new Promise((r) => setTimeout(r, 2200));
         setEvaluating(false);
         setSubmitting(true);
 
         try {
             const fd = new FormData();
-            fd.append('reporterName', answers.name);
-            fd.append('sourceStation', answers.sourceStation);
-            fd.append('destinationStation', answers.destinationStation);
+            fd.append('reporterName', answers.name.trim());
+            fd.append('sourceStation', answers.sourceStation.trim());
+            fd.append('destinationStation', answers.destinationStation.trim());
             fd.append('dateOfTravel', answers.dateOfTravel);
             fd.append('timeOfIncident', answers.timeOfIncident);
             fd.append('complaintCategory', answers.category);
-            fd.append('complaintCategoryOther', answers.categoryOther);
+            fd.append('complaintCategoryOther', answers.categoryOther.trim());
             fd.append('complaintDegree', answers.degree);
-            fd.append('pnrVerified', 'true'); // PNR validated via API; never send the actual PNR
+            fd.append('pnrVerified', 'true');
             if (answers.evidenceFile) {
                 fd.append('evidence', answers.evidenceFile);
             }
@@ -254,24 +382,36 @@ export default function ComplaintForm() {
             if (data.success) {
                 showLoader(() => {
                     setTicketId(data.ticketId);
-                    toast.success('Report submitted!');
-                }, 'Evaluating your report…');
+                    toast.success(t('complaint.reportSubmittedToast'));
+                }, t('complaint.evaluatingLoader'));
             } else {
-                toast.error(data.message || 'Submission failed.');
+                toast.error(data.message || t('complaint.submissionFailed'));
             }
         } catch (err) {
             console.error('Submission error:', err);
-            const message = err.response?.data?.message || 'Submission failed. Please try again.';
-            toast.error(message);
+            const status = err.response?.status;
+            const message = err.response?.data?.message;
+
+            if (status === 429) {
+                toast.error(message || t('complaint.tooManyRequests'));
+            } else if (status === 401) {
+                toast.error(t('complaint.sessionExpired'));
+            } else if (status === 413) {
+                toast.error(t('complaint.maxFileSize'));
+            } else if (!err.response) {
+                toast.error(t('complaint.networkError'));
+            } else {
+                toast.error(message || t('complaint.submissionFailedRetry'));
+            }
         } finally {
             setSubmitting(false);
         }
     };
 
-    // ── Render success ──────────────────────────────────────────────────────
+    actionsRef.current = { handleVerifyPNR, handleSubmit, goNext };
+
     if (ticketId) return <SuccessScreen ticketId={ticketId} />;
 
-    // ── Render evaluating overlay ───────────────────────────────────────────
     const progress = (step / TOTAL_STEPS) * 100;
 
     const variants = {
@@ -279,6 +419,9 @@ export default function ComplaintForm() {
         center: { x: 0, opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } },
         exit: (direction) => ({ x: direction > 0 ? -60 : 60, opacity: 0, transition: { duration: 0.25, ease: 'easeIn' } }),
     };
+
+    const categoryLabel = CATEGORY_KEYS.find((c) => c.value === answers.category);
+    const degreeLabel = DEGREE_KEYS.find((d) => d.value === answers.degree);
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0c1f3f 100%)' }}>
@@ -289,18 +432,27 @@ export default function ComplaintForm() {
                 <div className="max-w-xl mx-auto">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 text-white font-bold">
-                            <Train size={18} className="text-blue-400" />
-                            File a Report
+                            <Train size={18} className="text-orange-400" />
+                            {t('complaint.fileReport')}
                         </div>
-                        <span className="text-sm text-slate-400">Step {step} of {TOTAL_STEPS}</span>
+                        <span className="text-sm text-slate-400">{t('complaint.stepOf', { step, total: TOTAL_STEPS })}</span>
                     </div>
                     {/* Progress bar */}
                     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
+                            className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
                             animate={{ width: `${progress}%` }}
                             transition={{ duration: 0.4, ease: 'easeOut' }}
                         />
+                    </div>
+                    {/* Step indicators */}
+                    <div className="flex justify-between mt-2">
+                        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+                            <div
+                                key={i}
+                                className={`w-2 h-2 rounded-full transition-all ${i + 1 <= step ? 'bg-orange-400' : 'bg-white/15'} ${i + 1 === step ? 'scale-125' : ''}`}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>
@@ -319,116 +471,152 @@ export default function ComplaintForm() {
                         >
                             {/* STEP 1: Name */}
                             {step === 1 && (
-                                <QuestionCard title="What is your name?" subtitle="This helps identify your report.">
-                                    <input
-                                        className={INPUT_CLS}
-                                        placeholder="Enter your full name"
-                                        value={answers.name}
-                                        onChange={(e) => setAnswer('name', e.target.value)}
-                                        autoFocus
-                                    />
+                                <QuestionCard title={t('complaint.nameTitle')} subtitle={t('complaint.nameSubtitle')}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <User size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                            <input
+                                                className={`${INPUT_CLS} pl-9`}
+                                                placeholder={t('complaint.namePlaceholder')}
+                                                value={answers.name}
+                                                onChange={(e) => setAnswer('name', e.target.value)}
+                                                maxLength={100}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <VoiceInputButton
+                                            onResult={(text) => setAnswer('name', (answers.name ? answers.name + ' ' : '') + text)}
+                                        />
+                                    </div>
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 2: Source station */}
+                            {/* STEP 2: Route (Source + Destination combined) */}
                             {step === 2 && (
-                                <QuestionCard title="Where did your journey begin?" subtitle="Enter your train's source station.">
-                                    <div className="relative">
-                                        <MapPin size={16} className="absolute left-3 top-3.5 text-slate-400" />
-                                        <input
-                                            className={`${INPUT_CLS} pl-9`}
-                                            placeholder="e.g. New Delhi"
-                                            value={answers.sourceStation}
-                                            onChange={(e) => setAnswer('sourceStation', e.target.value)}
-                                            autoFocus
-                                        />
+                                <QuestionCard title={t('complaint.routeTitle')} subtitle={t('complaint.routeSubtitle')}>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium mb-1.5 block">{t('complaint.sourceLabel')}</label>
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <MapPin size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                                    <input
+                                                        className={`${INPUT_CLS} pl-9`}
+                                                        placeholder={t('complaint.sourcePlaceholder')}
+                                                        value={answers.sourceStation}
+                                                        onChange={(e) => setAnswer('sourceStation', e.target.value)}
+                                                        maxLength={100}
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                                <VoiceInputButton
+                                                    onResult={(text) => setAnswer('sourceStation', (answers.sourceStation ? answers.sourceStation + ' ' : '') + text)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-center">
+                                            <div className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center">
+                                                <ArrowRight size={14} className="text-slate-400 rotate-90" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium mb-1.5 block">{t('complaint.destLabel')}</label>
+                                            <div className="flex items-center gap-2">
+                                                <div className="relative flex-1">
+                                                    <MapPin size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                                    <input
+                                                        className={`${INPUT_CLS} pl-9`}
+                                                        placeholder={t('complaint.destPlaceholder')}
+                                                        value={answers.destinationStation}
+                                                        onChange={(e) => setAnswer('destinationStation', e.target.value)}
+                                                        maxLength={100}
+                                                    />
+                                                </div>
+                                                <VoiceInputButton
+                                                    onResult={(text) => setAnswer('destinationStation', (answers.destinationStation ? answers.destinationStation + ' ' : '') + text)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 3: Destination station */}
+                            {/* STEP 3: Date + Time (combined) */}
                             {step === 3 && (
-                                <QuestionCard title="Where was your destination?" subtitle="Enter your train's destination station.">
-                                    <div className="relative">
-                                        <MapPin size={16} className="absolute left-3 top-3.5 text-slate-400" />
-                                        <input
-                                            className={`${INPUT_CLS} pl-9`}
-                                            placeholder="e.g. Mumbai Central"
-                                            value={answers.destinationStation}
-                                            onChange={(e) => setAnswer('destinationStation', e.target.value)}
-                                            autoFocus
-                                        />
+                                <QuestionCard title={t('complaint.dateTimeTitle')} subtitle={t('complaint.dateTimeSubtitle')}>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium mb-1.5 block">{t('complaint.dateLabel')}</label>
+                                            <div className="relative">
+                                                <Calendar size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                                <input
+                                                    type="date"
+                                                    className={`${INPUT_CLS} pl-9`}
+                                                    max={new Date().toISOString().split('T')[0]}
+                                                    value={answers.dateOfTravel}
+                                                    onChange={(e) => setAnswer('dateOfTravel', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium mb-1.5 block">{t('complaint.timeLabel')}</label>
+                                            <div className="relative">
+                                                <Clock size={16} className="absolute left-3 top-3.5 text-slate-400" />
+                                                <input
+                                                    type="time"
+                                                    className={`${INPUT_CLS} pl-9`}
+                                                    value={answers.timeOfIncident}
+                                                    onChange={(e) => setAnswer('timeOfIncident', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 4: Date of travel */}
+                            {/* STEP 4: Category */}
                             {step === 4 && (
-                                <QuestionCard title="Date of travel" subtitle="When did you travel?">
-                                    <div className="relative">
-                                        <Calendar size={16} className="absolute left-3 top-3.5 text-slate-400" />
-                                        <input
-                                            type="date"
-                                            className={`${INPUT_CLS} pl-9`}
-                                            max={new Date().toISOString().split('T')[0]}
-                                            value={answers.dateOfTravel}
-                                            onChange={(e) => setAnswer('dateOfTravel', e.target.value)}
-                                        />
-                                    </div>
-                                </QuestionCard>
-                            )}
-
-                            {/* STEP 5: Time of incident */}
-                            {step === 5 && (
-                                <QuestionCard title="Time of incident" subtitle="Approximately when did this occur?">
-                                    <div className="relative">
-                                        <Clock size={16} className="absolute left-3 top-3.5 text-slate-400" />
-                                        <input
-                                            type="time"
-                                            className={`${INPUT_CLS} pl-9`}
-                                            value={answers.timeOfIncident}
-                                            onChange={(e) => setAnswer('timeOfIncident', e.target.value)}
-                                        />
-                                    </div>
-                                </QuestionCard>
-                            )}
-
-                            {/* STEP 6: Category */}
-                            {step === 6 && (
-                                <QuestionCard title="What type of complaint?" subtitle="Select the category that best describes the incident.">
+                                <QuestionCard title={t('complaint.categoryTitle')} subtitle={t('complaint.categorySubtitle')}>
                                     <div className="grid grid-cols-2 gap-3 mb-4">
-                                        {CATEGORY_OPTIONS.map((opt) => (
+                                        {CATEGORY_KEYS.map((opt) => (
                                             <button
-                                                key={opt}
+                                                key={opt.value}
                                                 type="button"
-                                                onClick={() => setAnswer('category', opt)}
-                                                className={`p-4 rounded-xl border-2 text-left transition font-medium text-sm ${answers.category === opt
-                                                    ? 'border-blue-500 bg-blue-500/15 text-white'
+                                                onClick={() => setAnswer('category', opt.value)}
+                                                className={`p-4 rounded-xl border-2 text-left transition font-medium text-sm ${answers.category === opt.value
+                                                    ? 'border-orange-500 bg-orange-500/15 text-white'
                                                     : 'border-white/15 bg-white/5 text-slate-300 hover:border-white/30'
                                                     }`}
                                             >
                                                 <Tag size={14} className="mb-1.5 opacity-70" />
-                                                {opt}
+                                                {t(opt.tKey)}
                                             </button>
                                         ))}
                                     </div>
                                     {answers.category === 'Other' && (
-                                        <textarea
-                                            className={`${INPUT_CLS} resize-none`}
-                                            rows={3}
-                                            placeholder="Describe the issue…"
-                                            value={answers.categoryOther}
-                                            onChange={(e) => setAnswer('categoryOther', e.target.value)}
-                                        />
+                                        <div className="flex items-start gap-2">
+                                            <textarea
+                                                className={`${INPUT_CLS} resize-none flex-1`}
+                                                rows={3}
+                                                placeholder={t('complaint.categoryOtherPlaceholder')}
+                                                value={answers.categoryOther}
+                                                onChange={(e) => setAnswer('categoryOther', e.target.value)}
+                                                maxLength={500}
+                                            />
+                                            <VoiceInputButton
+                                                onResult={(text) => setAnswer('categoryOther', (answers.categoryOther ? answers.categoryOther + ' ' : '') + text)}
+                                                className="mt-1"
+                                            />
+                                        </div>
                                     )}
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 7: Degree */}
-                            {step === 7 && (
-                                <QuestionCard title="How serious was this?" subtitle="Rate the severity of the complaint.">
+                            {/* STEP 5: Degree */}
+                            {step === 5 && (
+                                <QuestionCard title={t('complaint.degreeTitle')} subtitle={t('complaint.degreeSubtitle')}>
                                     <div className="flex flex-col gap-3">
-                                        {DEGREE_OPTIONS.map((opt) => (
+                                        {DEGREE_KEYS.map((opt) => (
                                             <button
                                                 key={opt.value}
                                                 type="button"
@@ -438,22 +626,22 @@ export default function ComplaintForm() {
                                                     : 'border-white/15 bg-white/5 text-slate-300 hover:border-white/30'
                                                     }`}
                                             >
-                                                <div className="font-bold text-sm mb-0.5">{opt.value}</div>
-                                                <div className="text-xs opacity-70">{opt.desc}</div>
+                                                <div className="font-bold text-sm mb-0.5">{t(opt.tKey)}</div>
+                                                <div className="text-xs opacity-70">{t(opt.descKey)}</div>
                                             </button>
                                         ))}
                                     </div>
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 8: Upload evidence */}
-                            {step === 8 && (
-                                <QuestionCard title="Upload evidence" subtitle="Photo, video, or audio of the incident.">
+                            {/* STEP 6: Upload evidence */}
+                            {step === 6 && (
+                                <QuestionCard title={t('complaint.uploadTitle')} subtitle={t('complaint.uploadSubtitle')}>
                                     <div
                                         onClick={() => fileRef.current.click()}
                                         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition ${answers.evidenceFile
                                             ? 'border-emerald-500/60 bg-emerald-500/8'
-                                            : 'border-white/20 hover:border-blue-500/60 hover:bg-blue-500/5'
+                                            : 'border-white/20 hover:border-orange-500/60 hover:bg-orange-500/5'
                                             }`}
                                     >
                                         {answers.evidencePreview ? (
@@ -467,8 +655,8 @@ export default function ComplaintForm() {
                                         ) : (
                                             <>
                                                 <Upload size={32} className="mx-auto text-slate-400 mb-3" />
-                                                <p className="text-slate-300 font-medium">Click to upload</p>
-                                                <p className="text-xs text-slate-500 mt-1">JPG, PNG, MP4, MOV, MP3 — Max 50MB</p>
+                                                <p className="text-slate-300 font-medium">{t('complaint.clickToUpload')}</p>
+                                                <p className="text-xs text-slate-500 mt-1">{t('complaint.uploadFormats')}</p>
                                             </>
                                         )}
                                     </div>
@@ -487,17 +675,17 @@ export default function ComplaintForm() {
                                 </QuestionCard>
                             )}
 
-                            {/* STEP 9: PNR verification via API */}
-                            {step === 9 && (
+                            {/* STEP 7: PNR verification */}
+                            {step === 7 && (
                                 <QuestionCard
-                                    title="Enter your 10-digit PNR"
-                                    subtitle="Your PNR is verified against our database. It is never stored in the complaint."
+                                    title={t('complaint.pnrTitle')}
+                                    subtitle={t('complaint.pnrSubtitle')}
                                 >
                                     <div className="relative mb-3">
                                         <Hash size={16} className="absolute left-3 top-3.5 text-slate-400" />
                                         <input
                                             className={`${INPUT_CLS} pl-9 font-mono tracking-widest text-lg`}
-                                            placeholder="0000000000"
+                                            placeholder={t('complaint.pnrPlaceholder')}
                                             maxLength={10}
                                             value={answers.pnr}
                                             onChange={(e) => {
@@ -509,7 +697,6 @@ export default function ComplaintForm() {
                                         />
                                     </div>
 
-                                    {/* Verify button */}
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
@@ -517,21 +704,21 @@ export default function ComplaintForm() {
                                         disabled={answers.pnr.length !== 10 || pnrVerifying || pnrVerified}
                                         className={`w-full py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 ${pnrVerified
                                             ? 'bg-emerald-600 text-white cursor-default'
-                                            : 'bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-slate-500 text-white'
+                                            : 'bg-orange-600 hover:bg-orange-500 disabled:bg-white/10 disabled:text-slate-500 text-white'
                                             }`}
                                     >
                                         {pnrVerifying ? (
                                             <>
                                                 <Loader2 size={16} className="animate-spin" />
-                                                Verifying…
+                                                {t('complaint.verifying')}
                                             </>
                                         ) : pnrVerified ? (
                                             <>
                                                 <CheckCircle size={16} />
-                                                PNR Verified
+                                                {t('complaint.pnrVerified')}
                                             </>
                                         ) : (
-                                            'Verify PNR'
+                                            t('complaint.verifyPnr')
                                         )}
                                     </motion.button>
 
@@ -553,13 +740,68 @@ export default function ComplaintForm() {
                                             className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-sm text-emerald-400 mt-3"
                                         >
                                             <CheckCircle size={15} className="mt-0.5 shrink-0" />
-                                            <span>PNR verified successfully. Your PNR will not be stored.</span>
+                                            <span>{t('complaint.pnrVerifiedNotStored')}</span>
                                         </motion.div>
                                     )}
 
                                     <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                                        <CheckCircle size={11} /> PNR is verified via our secure database and never stored.
+                                        <CheckCircle size={11} /> {t('complaint.pnrNeverStored')}
                                     </p>
+                                </QuestionCard>
+                            )}
+
+                            {/* STEP 8: Review & Submit */}
+                            {step === 8 && (
+                                <QuestionCard title={t('complaint.reviewTitle')} subtitle={t('complaint.reviewSubtitle')}>
+                                    <div className="divide-y divide-white/8">
+                                        <ReviewRow
+                                            label={t('complaint.reviewName')}
+                                            value={answers.name}
+                                            icon={User}
+                                            onEdit={() => goTo(1)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewRoute')}
+                                            value={`${answers.sourceStation} → ${answers.destinationStation}`}
+                                            icon={MapPin}
+                                            onEdit={() => goTo(2)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewDate')}
+                                            value={answers.dateOfTravel}
+                                            icon={Calendar}
+                                            onEdit={() => goTo(3)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewTime')}
+                                            value={answers.timeOfIncident}
+                                            icon={Clock}
+                                            onEdit={() => goTo(3)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewCategory')}
+                                            value={categoryLabel ? t(categoryLabel.tKey) : answers.category}
+                                            icon={Tag}
+                                            onEdit={() => goTo(4)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewDegree')}
+                                            value={degreeLabel ? t(degreeLabel.tKey) : answers.degree}
+                                            icon={BarChart2}
+                                            onEdit={() => goTo(5)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewEvidence')}
+                                            value={answers.evidenceFile ? `${answers.evidenceFile.name}` : '—'}
+                                            icon={Upload}
+                                            onEdit={() => goTo(6)}
+                                        />
+                                        <ReviewRow
+                                            label={t('complaint.reviewPnr')}
+                                            value={pnrVerified ? t('complaint.reviewPnrVerified') : '—'}
+                                            icon={Hash}
+                                        />
+                                    </div>
                                 </QuestionCard>
                             )}
                         </motion.div>
@@ -572,7 +814,7 @@ export default function ComplaintForm() {
                             disabled={step === 1}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/8 disabled:opacity-0 disabled:pointer-events-none transition"
                         >
-                            <ArrowLeft size={16} /> Back
+                            <ArrowLeft size={16} /> {t('common.back')}
                         </button>
 
                         {step < TOTAL_STEPS ? (
@@ -581,9 +823,9 @@ export default function ComplaintForm() {
                                 whileTap={{ scale: 0.97 }}
                                 onClick={goNext}
                                 disabled={!canProceed()}
-                                className="flex items-center gap-2 px-7 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold rounded-xl transition shadow-lg"
+                                className="flex items-center gap-2 px-7 py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-white/10 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold rounded-xl transition shadow-lg"
                             >
-                                Next <ArrowRight size={16} />
+                                {t('common.next')} <ArrowRight size={16} />
                             </motion.button>
                         ) : (
                             <motion.button
@@ -591,16 +833,16 @@ export default function ComplaintForm() {
                                 whileTap={{ scale: 0.97 }}
                                 onClick={handleSubmit}
                                 disabled={!canProceed() || submitting}
-                                className="flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-lg"
+                                className="flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-lg"
                             >
                                 {submitting ? (
                                     <>
                                         <Loader2 size={16} className="animate-spin" />
-                                        Submitting…
+                                        {t('complaint.submitting')}
                                     </>
                                 ) : (
                                     <>
-                                        Submit Report <CheckCircle size={16} />
+                                        {t('complaint.submitReport')} <CheckCircle size={16} />
                                     </>
                                 )}
                             </motion.button>

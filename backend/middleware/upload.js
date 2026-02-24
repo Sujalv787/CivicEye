@@ -14,11 +14,12 @@ if (hasCloudinary) {
         cloudinary,
         params: async (req, file) => {
             const isVideo = file.mimetype.startsWith('video/');
+            const isAudio = file.mimetype.startsWith('audio/');
             return {
                 folder: 'civiceye',
-                resource_type: isVideo ? 'video' : 'image',
-                allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov', 'avi'],
-                transformation: isVideo ? [] : [{ width: 1280, crop: 'limit' }],
+                resource_type: isVideo ? 'video' : isAudio ? 'video' : 'image',
+                allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov', 'avi', 'mp3', 'wav', 'ogg', 'webm'],
+                transformation: (isVideo || isAudio) ? [] : [{ width: 1280, crop: 'limit' }],
             };
         },
     });
@@ -49,11 +50,17 @@ const fileFilter = (req, file, cb) => {
         'video/mp4',
         'video/quicktime',
         'video/x-msvideo',
+        'audio/mpeg',
+        'audio/mp3',
+        'audio/wav',
+        'audio/wave',
+        'audio/ogg',
+        'audio/webm',
     ];
     if (allowed.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Unsupported file type. Only images and videos are allowed.'), false);
+        cb(new Error('Unsupported file type. Only images, videos, and audio files are allowed.'), false);
     }
 };
 

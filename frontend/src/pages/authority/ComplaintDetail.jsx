@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { getLocale } from '../../i18n/localeMap';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -8,32 +10,17 @@ import {
     ArrowLeft, Clock, FileVideo, Image, Music, Train, Tag, BarChart2,
     MapPin, Hash, CheckCircle, Zap, XCircle, Search
 } from 'lucide-react';
+import { ALL_STATUSES, STATUS_STYLES, STATUS_T_KEYS, STATUS_ICONS } from '../../utils/statusConfig';
 
-const VALID_STATUSES = ['Under Review', 'Investigating', 'Action Taken', 'Resolved', 'Rejected'];
+const VALID_STATUSES = ALL_STATUSES;
 
-const STATUS_STYLES = {
-    'Under Review': { pill: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-    'Investigating': { pill: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-    'Action Taken': { pill: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500' },
-    'Resolved': { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-    'Rejected': { pill: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-};
-
-const STATUS_ICONS = {
-    'Under Review': Clock,
-    'Investigating': Search,
-    'Action Taken': Zap,
-    'Resolved': CheckCircle,
-    'Rejected': XCircle,
-};
-
-function StatusBadge({ status, large = false }) {
+function StatusBadge({ status, large = false, t }) {
     const s = STATUS_STYLES[status] || { pill: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' };
     const Icon = STATUS_ICONS[status] || Clock;
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${large ? 'text-sm' : 'text-xs'} ${s.pill}`}>
             <Icon size={large ? 14 : 11} />
-            {status}
+            {t(STATUS_T_KEYS[status]) || status}
         </span>
     );
 }
@@ -52,11 +39,13 @@ function InfoField({ label, value, icon: Icon }) {
 export default function ComplaintDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
     const [complaint, setComplaint] = useState(null);
     const [loading, setLoading] = useState(true);
     const [newStatus, setNewStatus] = useState('');
     const [remark, setRemark] = useState('');
     const [updating, setUpdating] = useState(false);
+    const locale = getLocale(i18n.language);
 
     useEffect(() => {
         api.get(`/authority/complaints/${id}`)
@@ -74,9 +63,9 @@ export default function ComplaintDetail() {
             await api.patch(`/authority/complaints/${id}/status`, { status: newStatus, remark });
             setComplaint((prev) => ({ ...prev, status: newStatus }));
             setRemark('');
-            toast.success('Status updated successfully!');
+            toast.success(t('complaintDetail.statusUpdated'));
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Update failed.');
+            toast.error(err.response?.data?.message || t('complaintDetail.updateFailed'));
         } finally {
             setUpdating(false);
         }
@@ -85,7 +74,7 @@ export default function ComplaintDetail() {
     if (loading) return (
         <DashboardLayout>
             <div className="flex items-center justify-center h-64">
-                <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
+                <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-orange-600 animate-spin" />
             </div>
         </DashboardLayout>
     );
@@ -104,7 +93,7 @@ export default function ComplaintDetail() {
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 mb-6 transition"
                 >
-                    <ArrowLeft size={16} /> Back to Reports
+                    <ArrowLeft size={16} /> {t('complaintDetail.backToReports')}
                 </button>
 
                 {/* Header */}
@@ -114,15 +103,15 @@ export default function ComplaintDetail() {
                     className="flex items-start justify-between mb-6 flex-wrap gap-4"
                 >
                     <div>
-                        <p className="text-xs text-slate-400 font-semibold tracking-widest mb-1">COMPLAINT DETAIL</p>
+                        <p className="text-xs text-slate-400 font-semibold tracking-widest mb-1">{t('complaintDetail.complaintDetail')}</p>
                         <h1 className="text-2xl font-black text-slate-900">
-                            <span className="font-mono text-blue-700">{complaint.ticketId || '—'}</span>
+                            <span className="font-mono text-orange-700">{complaint.ticketId || '—'}</span>
                         </h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Filed on {new Date(complaint.createdAt).toLocaleString('en-IN')}
+                            {t('complaintDetail.filedOn', { date: new Date(complaint.createdAt).toLocaleString(locale) })}
                         </p>
                     </div>
-                    <StatusBadge status={complaint.status} large />
+                    <StatusBadge status={complaint.status} large t={t} />
                 </motion.div>
 
                 <div className="grid lg:grid-cols-3 gap-6">
@@ -138,12 +127,12 @@ export default function ComplaintDetail() {
                                 className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
                             >
                                 <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-                                    {isVideo ? <FileVideo size={16} className="text-blue-600" />
-                                        : isAudio ? <Music size={16} className="text-blue-600" />
-                                            : <Image size={16} className="text-blue-600" />}
-                                    <span className="font-semibold text-slate-900 text-sm">Evidence</span>
+                                    {isVideo ? <FileVideo size={16} className="text-orange-600" />
+                                        : isAudio ? <Music size={16} className="text-orange-600" />
+                                            : <Image size={16} className="text-orange-600" />}
+                                    <span className="font-semibold text-slate-900 text-sm">{t('complaintDetail.evidence')}</span>
                                     <span className="ml-auto text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                                        {isVideo ? 'Video' : isAudio ? 'Audio' : 'Image'}
+                                        {isVideo ? t('complaintDetail.video') : isAudio ? t('complaintDetail.audio') : t('complaintDetail.image')}
                                     </span>
                                 </div>
                                 <div className="p-4 bg-slate-50">
@@ -160,9 +149,9 @@ export default function ComplaintDetail() {
                                         href={complaint.evidence.url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="text-xs text-blue-600 hover:underline mt-3 inline-block"
+                                        className="text-xs text-orange-600 hover:underline mt-3 inline-block"
                                     >
-                                        Open in new tab →
+                                        {t('common.openInNewTab')}
                                     </a>
                                 </div>
                             </motion.div>
@@ -176,23 +165,23 @@ export default function ComplaintDetail() {
                             className="bg-white rounded-2xl border border-slate-200 p-5"
                         >
                             <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Train size={16} className="text-blue-600" /> Journey & Complaint Details
+                                <Train size={16} className="text-orange-600" /> {t('complaintDetail.journeyDetails')}
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
-                                <InfoField label="Ticket ID" value={complaint.ticketId} icon={Hash} />
-                                <InfoField label="Filed On" value={new Date(complaint.createdAt).toLocaleString('en-IN')} icon={Clock} />
-                                <InfoField label="Source Station" value={complaint.sourceStation} icon={MapPin} />
-                                <InfoField label="Destination" value={complaint.destinationStation} icon={MapPin} />
-                                <InfoField label="Category" value={complaint.complaintCategory} icon={Tag} />
+                                <InfoField label={t('complaintDetail.ticketId')} value={complaint.ticketId} icon={Hash} />
+                                <InfoField label={t('complaintDetail.filedOnLabel')} value={new Date(complaint.createdAt).toLocaleString(locale)} icon={Clock} />
+                                <InfoField label={t('complaintDetail.sourceStation')} value={complaint.sourceStation} icon={MapPin} />
+                                <InfoField label={t('complaintDetail.destination')} value={complaint.destinationStation} icon={MapPin} />
+                                <InfoField label={t('complaintDetail.category')} value={complaint.complaintCategory} icon={Tag} />
                                 <InfoField
-                                    label="Degree"
+                                    label={t('complaintDetail.degreeLabel')}
                                     value={complaint.complaintDegree}
                                     icon={BarChart2}
                                 />
                             </div>
                             {complaint.complaintCategoryOther && (
                                 <div className="mt-3 bg-slate-50 rounded-xl p-4">
-                                    <p className="text-xs text-slate-400 mb-1">Additional Context</p>
+                                    <p className="text-xs text-slate-400 mb-1">{t('complaintDetail.additionalContext')}</p>
                                     <p className="text-sm text-slate-700">{complaint.complaintCategoryOther}</p>
                                 </div>
                             )}
@@ -206,7 +195,7 @@ export default function ComplaintDetail() {
                                 transition={{ delay: 0.2 }}
                                 className="bg-white rounded-2xl border border-slate-200 p-5"
                             >
-                                <h3 className="font-bold text-slate-900 mb-4">Status Timeline</h3>
+                                <h3 className="font-bold text-slate-900 mb-4">{t('complaintDetail.statusTimeline')}</h3>
                                 <div className="relative pl-5 space-y-5">
                                     <div className="absolute left-1.5 top-0 bottom-0 w-px bg-slate-200" />
                                     {[...complaint.statusHistory].reverse().map((h, i) => {
@@ -215,9 +204,9 @@ export default function ComplaintDetail() {
                                             <div key={i} className="relative flex items-start gap-3 text-sm">
                                                 <div className={`w-3 h-3 rounded-full border-2 border-white absolute -left-4 ${S?.dot || 'bg-slate-400'}`} style={{ top: '4px' }} />
                                                 <div>
-                                                    <StatusBadge status={h.status} />
+                                                    <StatusBadge status={h.status} t={t} />
                                                     {h.remark && <p className="text-slate-500 mt-1 text-xs">{h.remark}</p>}
-                                                    <p className="text-xs text-slate-400 mt-0.5">{new Date(h.timestamp).toLocaleString('en-IN')}</p>
+                                                    <p className="text-xs text-slate-400 mt-0.5">{new Date(h.timestamp).toLocaleString(locale)}</p>
                                                 </div>
                                             </div>
                                         );
@@ -235,7 +224,7 @@ export default function ComplaintDetail() {
                             transition={{ delay: 0.25 }}
                             className="bg-white rounded-2xl border border-slate-200 p-5 sticky top-6"
                         >
-                            <h3 className="font-bold text-slate-900 mb-5">Update Status</h3>
+                            <h3 className="font-bold text-slate-900 mb-5">{t('complaintDetail.updateStatus')}</h3>
 
                             {/* Status selector — radio-style */}
                             <div className="space-y-2 mb-4">
@@ -252,20 +241,20 @@ export default function ComplaintDetail() {
                                                 }`}
                                         >
                                             <Icon size={14} />
-                                            {s}
+                                            {t(STATUS_T_KEYS[s])}
                                         </button>
                                     );
                                 })}
                             </div>
 
                             {/* Remark */}
-                            <label className="block text-xs font-medium text-slate-500 mb-1.5">Remark (optional)</label>
+                            <label className="block text-xs font-medium text-slate-500 mb-1.5">{t('complaintDetail.remarkLabel')}</label>
                             <textarea
                                 value={remark}
                                 onChange={(e) => setRemark(e.target.value)}
                                 rows={3}
-                                placeholder="Add a note for the record…"
-                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-slate-50"
+                                placeholder={t('complaintDetail.remarkPlaceholder')}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none bg-slate-50"
                             />
 
                             <motion.button
@@ -273,15 +262,15 @@ export default function ComplaintDetail() {
                                 whileTap={{ scale: 0.98 }}
                                 onClick={handleUpdate}
                                 disabled={updating || newStatus === complaint.status}
-                                className="w-full mt-3 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl transition text-sm"
+                                className="w-full mt-3 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl transition text-sm"
                             >
-                                {updating ? 'Updating…' : 'Save Status'}
+                                {updating ? t('complaintDetail.updating') : t('complaintDetail.saveStatus')}
                             </motion.button>
 
                             {/* Previous remarks */}
                             {complaint.remarks?.length > 0 && (
                                 <div className="mt-5 pt-5 border-t border-slate-100">
-                                    <h4 className="text-xs font-semibold text-slate-500 mb-3">Previous Remarks</h4>
+                                    <h4 className="text-xs font-semibold text-slate-500 mb-3">{t('complaintDetail.previousRemarks')}</h4>
                                     <div className="space-y-2">
                                         {complaint.remarks.map((r, i) => (
                                             <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-xs text-slate-700">

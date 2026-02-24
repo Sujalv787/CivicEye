@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useTrainLoader } from '../context/TrainLoaderContext';
 
 // Spinning wheel component
@@ -28,7 +29,7 @@ function TrainCar({ isEngine = false }) {
             {/* Car body */}
             <div
                 className={`absolute inset-0 rounded-lg ${isEngine
-                    ? 'bg-gradient-to-r from-blue-700 to-blue-600'
+                    ? 'bg-gradient-to-r from-orange-700 to-orange-600'
                     : 'bg-gradient-to-r from-slate-700 to-slate-600'
                     } border-2 border-slate-500 shadow-lg`}
             />
@@ -77,6 +78,7 @@ function SteamPuff({ index }) {
 }
 
 export default function TrainLoader() {
+    const { t } = useTranslation();
     const { visible, handleDone, customText } = useTrainLoader();
 
     useEffect(() => {
@@ -95,7 +97,7 @@ export default function TrainLoader() {
                     transition={{ duration: 0.3 }}
                     className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
                     style={{
-                        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%)',
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #3d1f00 50%, #1a1a2e 100%)',
                     }}
                 >
                     {/* Stars background */}
@@ -165,13 +167,13 @@ export default function TrainLoader() {
                         transition={{ delay: 0.3 }}
                     >
                         <p className="text-white text-xl font-semibold tracking-wide">
-                            {customText || 'Preparing your reporting journey…'}
+                            {customText || t('trainLoader.defaultText')}
                         </p>
                         <div className="flex items-center justify-center gap-1 mt-3">
                             {[0, 1, 2].map((i) => (
                                 <motion.div
                                     key={i}
-                                    className="w-2 h-2 rounded-full bg-blue-400"
+                                    className="w-2 h-2 rounded-full bg-orange-400"
                                     animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
                                     transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                                 />

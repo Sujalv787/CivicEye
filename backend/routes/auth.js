@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { register, login, verifyEmail, getMe } = require('../controllers/authController');
+const { register, login, googleLogin, verifyEmail, getMe } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 
@@ -18,6 +18,7 @@ const loginValidation = [
 
 router.post('/register', authLimiter, registerValidation, register);
 router.post('/login', authLimiter, loginValidation, login);
+router.post('/google', authLimiter, googleLogin);
 router.get('/verify-email/:token', verifyEmail);
 router.get('/me', protect, getMe);
 

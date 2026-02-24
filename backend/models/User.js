@@ -18,10 +18,12 @@ const UserSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Password is required'],
             minlength: [8, 'Password must be at least 8 characters'],
             select: false,
+            required: function () { return this.authProvider === 'local'; },
         },
+        googleId: { type: String, default: null },
+        authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
         role: {
             type: String,
             enum: ['citizen', 'traffic_admin', 'railway_admin'],
@@ -45,7 +47,7 @@ const UserSchema = new mongoose.Schema(
 
 // Hash password before save (Mongoose 7+ compatible)
 UserSchema.pre('save', async function () {
-    if (!this.isModified('password')) return;
+    if (!this.isModified('password') || !this.password) return;
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
 });

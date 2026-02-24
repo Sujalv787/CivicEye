@@ -1,7 +1,10 @@
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { sendVerificationEmail } = require('../utils/email');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -113,6 +116,64 @@ exports.verifyEmail = async (req, res) => {
         res.json({ success: true, message: 'Email verified successfully.' });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Server error.', error: err.message });
+    }
+};
+
+// @desc    Google Login / Register
+// @route   POST /api/auth/google
+// @access  Public
+exports.googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            return res.status(400).json({ success: false, message: 'Google credential is required.' });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const { email, name, sub: googleId } = ticket.getPayload();
+
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Link Google to existing local account if not already linked
+            if (!user.googleId) {
+                user.googleId = googleId;
+                if (user.authProvider === 'local') {
+                    // Keep authProvider as local so password still works
+                }
+                await user.save();
+            }
+        } else {
+            // Create new Google-only user
+            user = await User.create({
+                name,
+                email,
+                googleId,
+                authProvider: 'google',
+                isVerified: true,
+                role: 'citizen',
+            });
+        }
+
+        const token = generateToken(user._id, user.role);
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isVerified: user.isVerified,
+            },
+        });
+    } catch (err) {
+        console.error('Google login error:', err.message);
+        res.status(401).json({ success: false, message: 'Google authentication failed.' });
     }
 };
 
