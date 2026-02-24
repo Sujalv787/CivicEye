@@ -92,13 +92,13 @@ function SuccessScreen({ ticketId }) {
 
                 <div className="flex gap-3">
                     <button
-                        onClick={() => navigate('/track')}
+                        onClick={() => navigate('/track', { state: { ticketId }, replace: true })}
                         className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition"
                     >
                         Track Status
                     </button>
                     <button
-                        onClick={() => navigate('/dashboard', { state: { newTicketId: ticketId } })}
+                        onClick={() => navigate('/dashboard', { state: { newTicketId: ticketId }, replace: true })}
                         className="flex-1 py-3 bg-white/8 hover:bg-white/12 text-white font-semibold rounded-xl border border-white/15 transition"
                     >
                         My Dashboard
@@ -255,7 +255,7 @@ export default function ComplaintForm() {
                 showLoader(() => {
                     setTicketId(data.ticketId);
                     toast.success('Report submitted!');
-                });
+                }, 'Evaluating your report…');
             } else {
                 toast.error(data.message || 'Submission failed.');
             }

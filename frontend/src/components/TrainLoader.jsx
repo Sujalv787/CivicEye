@@ -77,7 +77,7 @@ function SteamPuff({ index }) {
 }
 
 export default function TrainLoader() {
-    const { visible, handleDone } = useTrainLoader();
+    const { visible, handleDone, customText } = useTrainLoader();
 
     useEffect(() => {
         if (!visible) return;
@@ -165,7 +165,7 @@ export default function TrainLoader() {
                         transition={{ delay: 0.3 }}
                     >
                         <p className="text-white text-xl font-semibold tracking-wide">
-                            Preparing your reporting journey…
+                            {customText || 'Preparing your reporting journey…'}
                         </p>
                         <div className="flex items-center justify-center gap-1 mt-3">
                             {[0, 1, 2].map((i) => (

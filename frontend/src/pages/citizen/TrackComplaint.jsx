@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../api/axios';
@@ -18,25 +18,36 @@ const ALL_STATUSES = ['Under Review', 'Investigating', 'Action Taken', 'Resolved
 
 export default function TrackComplaint() {
     const { user } = useAuth();
-    const [id, setId] = useState('');
+    const location = useLocation();
+    const [id, setId] = useState(location.state?.ticketId || '');
     const [complaint, setComplaint] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
-        if (!id.trim()) return;
+    const performSearch = async (searchId) => {
+        if (!searchId.trim()) return;
         setLoading(true);
         setError('');
         setComplaint(null);
         try {
-            const { data } = await api.get(`/complaints/track/${id.trim().toUpperCase()}`);
+            const { data } = await api.get(`/complaints/track/${searchId.trim().toUpperCase()}`);
             setComplaint(data.complaint);
         } catch (err) {
             setError(err.response?.data?.message || 'Complaint not found.');
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        if (location.state?.ticketId) {
+            performSearch(location.state.ticketId);
+        }
+    }, [location.state?.ticketId]);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        performSearch(id);
     };
 
     const statusIdx = complaint ? ALL_STATUSES.indexOf(complaint.status) : -1;
@@ -78,8 +89,8 @@ export default function TrackComplaint() {
                             <p className="font-mono text-xl font-bold text-blue-700">{complaint.ticketId}</p>
                         </div>
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${complaint.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                complaint.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
-                                    'bg-blue-100 text-blue-700'
+                            complaint.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :
+                                'bg-blue-100 text-blue-700'
                             }`}>
                             {complaint.status}
                         </span>

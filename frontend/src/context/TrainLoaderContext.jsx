@@ -6,9 +6,12 @@ export function TrainLoaderProvider({ children }) {
     const [visible, setVisible] = useState(false);
     const [onDoneCallback, setOnDoneCallback] = useState(null);
 
-    // Call this to show the train loader for ~2.5s, then execute the callback
-    const showLoader = useCallback((callback) => {
+    const [customText, setCustomText] = useState(null);
+
+    // Call this to show the train loader for ~2s, passing optional custom text
+    const showLoader = useCallback((callback, textOverride = null) => {
         setOnDoneCallback(() => callback);
+        setCustomText(textOverride);
         setVisible(true);
     }, []);
 
@@ -21,7 +24,7 @@ export function TrainLoaderProvider({ children }) {
     }, [onDoneCallback]);
 
     return (
-        <TrainLoaderContext.Provider value={{ visible, showLoader, handleDone }}>
+        <TrainLoaderContext.Provider value={{ visible, showLoader, handleDone, customText }}>
             {children}
         </TrainLoaderContext.Provider>
     );
