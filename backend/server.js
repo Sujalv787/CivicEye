@@ -30,11 +30,20 @@ app.use('/api/authority', require('./routes/authority'));
 app.use('/api/pnr', require('./routes/pnr'));
 app.use('/api/reports', require('./routes/reports'));
 
+// Serve frontend static files
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// 404 handler
-app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found.' }));
+// 404 handler for API routes
+app.use('/api', (req, res) => res.status(404).json({ success: false, message: 'API route not found.' }));
+
+// All other GET requests not handled before will return the React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 // Global error handler
 app.use((err, req, res, next) => {
