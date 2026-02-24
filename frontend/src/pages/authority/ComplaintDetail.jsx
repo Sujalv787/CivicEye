@@ -116,7 +116,7 @@ export default function ComplaintDetail() {
                     <div>
                         <p className="text-xs text-slate-400 font-semibold tracking-widest mb-1">COMPLAINT DETAIL</p>
                         <h1 className="text-2xl font-black text-slate-900">
-                            <span className="font-mono text-blue-700">{complaint.trackingId || '—'}</span>
+                            <span className="font-mono text-blue-700">{complaint.ticketId || '—'}</span>
                         </h1>
                         <p className="text-sm text-slate-500 mt-1">
                             Filed on {new Date(complaint.createdAt).toLocaleString('en-IN')}
@@ -179,7 +179,7 @@ export default function ComplaintDetail() {
                                 <Train size={16} className="text-blue-600" /> Journey & Complaint Details
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
-                                <InfoField label="Tracking ID" value={complaint.trackingId} icon={Hash} />
+                                <InfoField label="Ticket ID" value={complaint.ticketId} icon={Hash} />
                                 <InfoField label="Filed On" value={new Date(complaint.createdAt).toLocaleString('en-IN')} icon={Clock} />
                                 <InfoField label="Source Station" value={complaint.sourceStation} icon={MapPin} />
                                 <InfoField label="Destination" value={complaint.destinationStation} icon={MapPin} />

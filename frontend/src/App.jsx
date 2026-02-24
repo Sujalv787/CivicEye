@@ -34,7 +34,6 @@ function AnimatedRoutes() {
         <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
-        <Route path="/track" element={<PageTransition><TrackComplaint /></PageTransition>} />
 
         {/* Citizen (protected) */}
         <Route path="/dashboard" element={
@@ -42,9 +41,14 @@ function AnimatedRoutes() {
             <PageTransition><CitizenDashboard /></PageTransition>
           </ProtectedRoute>
         } />
-        <Route path="/submit" element={
+        <Route path="/report" element={
           <ProtectedRoute roles={CITIZEN_ROLES}>
             <PageTransition><ComplaintForm /></PageTransition>
+          </ProtectedRoute>
+        } />
+        <Route path="/track" element={
+          <ProtectedRoute roles={CITIZEN_ROLES}>
+            <PageTransition><TrackComplaint /></PageTransition>
           </ProtectedRoute>
         } />
 

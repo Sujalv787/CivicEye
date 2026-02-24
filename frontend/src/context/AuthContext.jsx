@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -9,6 +9,10 @@ export const AuthProvider = ({ children }) => {
     });
     const [token, setToken] = useState(() => localStorage.getItem('ce_token') || null);
     const [loading, setLoading] = useState(false);
+    const [isReady, setIsReady] = useState(false);
+
+    // Mark auth as ready after first render (localStorage has been read)
+    useEffect(() => { setIsReady(true); }, []);
 
     const login = async (email, password) => {
         setLoading(true);
@@ -50,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, isReady, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

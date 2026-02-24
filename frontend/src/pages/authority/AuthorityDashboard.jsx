@@ -170,7 +170,7 @@ export default function AuthorityDashboard() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/60">
-                                    <th className="text-left px-6 py-3 text-slate-500 font-semibold text-xs tracking-wide">TRACKING ID</th>
+                                    <th className="text-left px-6 py-3 text-slate-500 font-semibold text-xs tracking-wide">Ticket ID</th>
                                     <th className="text-left px-6 py-3 text-slate-500 font-semibold text-xs tracking-wide">ROUTE</th>
                                     <th className="text-left px-6 py-3 text-slate-500 font-semibold text-xs tracking-wide">CATEGORY</th>
                                     <th className="text-left px-6 py-3 text-slate-500 font-semibold text-xs tracking-wide">DEGREE</th>
@@ -188,7 +188,7 @@ export default function AuthorityDashboard() {
                                         transition={{ delay: i * 0.05 }}
                                         className="border-b border-slate-50 hover:bg-slate-50/80 transition"
                                     >
-                                        <td className="px-6 py-4 font-mono text-blue-700 text-xs font-bold">{c.trackingId}</td>
+                                        <td className="px-6 py-4 font-mono text-blue-700 text-xs font-bold">{c.ticketId}</td>
                                         <td className="px-6 py-4 text-slate-600 text-xs">
                                             {c.sourceStation && c.destinationStation
                                                 ? `${c.sourceStation} → ${c.destinationStation}`

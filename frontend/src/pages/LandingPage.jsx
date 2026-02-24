@@ -11,46 +11,39 @@ import toast from 'react-hot-toast';
 // ── Timeline steps ──────────────────────────────────────────────────────────
 const STEPS = [
     {
-        icon: Camera,
-        title: 'Capture Evidence',
-        desc: 'Photo, video, or audio evidence of the incident is uploaded directly from your device.',
+        icon: Users,
+        title: 'Register / Login',
+        desc: 'Sign up or log into your CivicEye account to securely file reports.',
         color: 'from-blue-500 to-blue-600',
         glow: '#3b82f6',
     },
     {
-        icon: MapPin,
-        title: 'Provide Travel Details',
-        desc: 'Share your source & destination stations, date of travel, and time of incident.',
+        icon: Camera,
+        title: 'File a Report',
+        desc: 'Provide details like source station, destination, and upload evidence.',
         color: 'from-violet-500 to-violet-600',
         glow: '#8b5cf6',
     },
     {
-        icon: Shield,
-        title: 'PNR Verification',
-        desc: 'Your 10-digit PNR is validated against our database. It\'s never stored — only the verification result is recorded.',
-        color: 'from-emerald-500 to-emerald-600',
-        glow: '#10b981',
-    },
-    {
-        icon: FileSearch,
-        title: 'Report Evaluation',
-        desc: 'Your submission is cross-checked and evaluated before entering the review queue.',
-        color: 'from-amber-500 to-amber-600',
-        glow: '#f59e0b',
-    },
-    {
         icon: Hash,
-        title: 'Tracking ID Generated',
-        desc: 'A unique CIV-YYYY-XXXX tracking ID is generated instantly for your grievance.',
+        title: 'Ticket ID Generated',
+        desc: 'A unique CIV-YYYY-XXXX ticket ID is assigned instantly to your report.',
         color: 'from-rose-500 to-rose-600',
         glow: '#f43f5e',
     },
     {
-        icon: Users,
-        title: 'Authority Review',
-        desc: 'The complaint is reviewed by relevant authorities who update the status in real time.',
-        color: 'from-sky-500 to-sky-600',
-        glow: '#0ea5e9',
+        icon: Shield,
+        title: 'Admin Review',
+        desc: 'Our system and authorities review the evidence for accountability.',
+        color: 'from-amber-500 to-amber-600',
+        glow: '#f59e0b',
+    },
+    {
+        icon: FileSearch,
+        title: 'Track Status',
+        desc: 'Track the status of your Ticket ID through the platform in real time.',
+        color: 'from-emerald-500 to-emerald-600',
+        glow: '#10b981',
     },
 ];
 
@@ -120,14 +113,12 @@ export default function LandingPage() {
     const { showLoader } = useTrainLoader();
     const { token } = useAuth();
 
-    const handleFileReport = () => {
+    const handleGetStarted = () => {
         if (!token) {
-            // Not logged in → redirect to login with message
-            toast.error('Please login or register to file a report.', { duration: 5000, id: 'login-required' });
-            navigate('/login', { state: { from: '/submit', message: 'Please login or register to file a report.' } });
-            return;
+            navigate('/login');
+        } else {
+            navigate('/dashboard');
         }
-        showLoader(() => navigate('/submit'));
     };
 
     return (
@@ -156,10 +147,10 @@ export default function LandingPage() {
                             </Link>
                         )}
                         <button
-                            onClick={handleFileReport}
+                            onClick={handleGetStarted}
                             className="text-sm font-semibold px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition shadow-lg shadow-blue-900/40"
                         >
-                            File a Report
+                            Get Started
                         </button>
                     </div>
                 </div>
@@ -194,12 +185,12 @@ export default function LandingPage() {
                         </p>
                         <div className="flex items-center justify-center gap-4 flex-wrap">
                             <motion.button
-                                onClick={handleFileReport}
+                                onClick={handleGetStarted}
                                 whileHover={{ scale: 1.04 }}
                                 whileTap={{ scale: 0.97 }}
                                 className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-2xl transition shadow-xl shadow-blue-900/50 text-lg"
                             >
-                                <Train size={20} /> File a Report <ArrowRight size={18} />
+                                <Train size={20} /> Get Started <ArrowRight size={18} />
                             </motion.button>
                             <Link
                                 to="/track"
@@ -265,12 +256,12 @@ export default function LandingPage() {
                         transition={{ duration: 0.6 }}
                     >
                         <motion.button
-                            onClick={handleFileReport}
+                            onClick={handleGetStarted}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.97 }}
                             className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-bold rounded-2xl text-lg shadow-2xl shadow-blue-900/50 hover:shadow-blue-900/70 transition"
                         >
-                            <Train size={22} /> File a Report Now <ArrowRight size={20} />
+                            <Train size={22} /> Get Started <ArrowRight size={20} />
                         </motion.button>
                     </motion.div>
                 </div>
@@ -286,7 +277,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-3 gap-6">
                         {[
                             { icon: Shield, title: 'Zero PNR Storage', desc: 'Your PNR number is never stored or shared. Only the verification status is saved.', color: 'text-emerald-400' },
-                            { icon: Star, title: 'CIV Tracking ID', desc: 'Every report gets a unique CIV-YYYY-XXXX ID for real-time status tracking.', color: 'text-amber-400' },
+                            { icon: Star, title: 'CIV Ticket ID', desc: 'Every report gets a unique CIV-YYYY-XXXX ID for real-time status tracking.', color: 'text-amber-400' },
                             { icon: CheckCircle, title: 'Evidence-Backed', desc: 'Photo, video, and audio evidence ensures every report is verifiable.', color: 'text-blue-400' },
                         ].map((f) => (
                             <motion.div
@@ -310,12 +301,12 @@ export default function LandingPage() {
                     <h2 className="text-4xl font-black text-white mb-4">Ready to Make a Difference?</h2>
                     <p className="text-slate-400 mb-8">Join citizens holding public systems accountable.</p>
                     <motion.button
-                        onClick={handleFileReport}
+                        onClick={handleGetStarted}
                         whileHover={{ scale: 1.04 }}
                         whileTap={{ scale: 0.97 }}
                         className="inline-flex items-center gap-3 px-10 py-4 bg-white text-slate-900 font-bold rounded-2xl text-lg hover:bg-blue-50 transition shadow-2xl"
                     >
-                        <Train size={20} /> File a Report <ArrowRight size={18} />
+                        <Train size={20} /> Get Started <ArrowRight size={18} />
                     </motion.button>
                 </div>
             </section>

@@ -83,7 +83,7 @@ export default function ComplaintList() {
                         <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
                         <input
                             className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
-                            placeholder="Search by CIV tracking ID…"
+                            placeholder="Search by CIV Ticket ID…"
                             value={search}
                             onChange={(e) => { setSearch(e.target.value.toUpperCase()); setPage(1); }}
                         />
@@ -134,7 +134,7 @@ export default function ComplaintList() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/70">
-                                    {['TRACKING ID', 'ROUTE', 'CATEGORY', 'DEGREE', 'STATUS', 'FILED ON', ''].map((h) => (
+                                    {['Ticket ID', 'ROUTE', 'CATEGORY', 'DEGREE', 'STATUS', 'FILED ON', ''].map((h) => (
                                         <th key={h} className="text-left px-5 py-3 text-slate-400 font-semibold text-xs tracking-wide whitespace-nowrap">{h}</th>
                                     ))}
                                 </tr>
@@ -150,7 +150,7 @@ export default function ComplaintList() {
                                             className="border-b border-slate-50 hover:bg-blue-50/30 transition group"
                                         >
                                             <td className="px-5 py-4 font-mono text-blue-700 text-xs font-bold tracking-wide">
-                                                {c.trackingId || '—'}
+                                                {c.ticketId || '—'}
                                             </td>
                                             <td className="px-5 py-4 text-slate-600 text-xs whitespace-nowrap">
                                                 {c.sourceStation && c.destinationStation

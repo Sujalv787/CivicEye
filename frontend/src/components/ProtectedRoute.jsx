@@ -4,16 +4,21 @@ import toast from 'react-hot-toast';
 import { useEffect, useRef } from 'react';
 
 const ProtectedRoute = ({ children, roles }) => {
-    const { user, token } = useAuth();
+    const { user, token, isReady } = useAuth();
     const location = useLocation();
     const hasToasted = useRef(false);
 
     useEffect(() => {
-        if (!token && !hasToasted.current) {
+        if (isReady && !token && !hasToasted.current) {
             hasToasted.current = true;
             toast.error('Please login or register to file a report.', { duration: 5000, id: 'login-required' });
         }
-    }, [token]);
+    }, [isReady, token]);
+
+    // Wait until localStorage has been read before making any redirect decision
+    if (!isReady) {
+        return null; // or a tiny spinner if you prefer
+    }
 
     if (!token || !user) {
         // Redirect to login, preserving the intended destination

@@ -45,7 +45,7 @@ export default function TrackComplaint() {
         <div className="max-w-2xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900">Track Report</h1>
-                <p className="text-slate-500 text-sm mt-1">Enter your CIV tracking ID to check the current status.</p>
+                <p className="text-slate-500 text-sm mt-1">Enter your CIV Ticket ID to check the current status.</p>
             </div>
 
             <form onSubmit={handleSearch} className="flex gap-3 mb-8">
@@ -74,8 +74,8 @@ export default function TrackComplaint() {
                     {/* Header */}
                     <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
                         <div>
-                            <p className="text-xs text-slate-400 mb-1">Tracking ID</p>
-                            <p className="font-mono text-xl font-bold text-blue-700">{complaint.trackingId}</p>
+                            <p className="text-xs text-slate-400 mb-1">Ticket ID</p>
+                            <p className="font-mono text-xl font-bold text-blue-700">{complaint.ticketId}</p>
                         </div>
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${complaint.status === 'Rejected' ? 'bg-red-100 text-red-700' :
                                 complaint.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' :

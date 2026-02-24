@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,9 +7,13 @@ import toast from 'react-hot-toast';
 export default function RegisterPage() {
     const { register, loading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [form, setForm] = useState({ name: '', email: '', password: '' });
     const [showPass, setShowPass] = useState(false);
     const [error, setError] = useState('');
+
+    // Restore redirect destination if user was sent here from a protected route
+    const redirectFrom = location.state?.from || '';
 
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -22,8 +26,12 @@ export default function RegisterPage() {
         }
         const result = await register(form.name, form.email, form.password);
         if (result.success) {
-            toast.success('Account created! Please verify your email.');
-            navigate('/dashboard');
+            toast.success(`Welcome, ${result.user.name}! Account created successfully.`);
+            if (redirectFrom) {
+                navigate(redirectFrom, { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
         } else {
             setError(result.message);
         }

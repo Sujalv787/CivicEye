@@ -4,7 +4,7 @@ const {
     listComplaints,
     getComplaintDetail,
     updateComplaintStatus,
-    updateStatusByTrackingId,
+    updateStatusByTicketId,
     getAnalytics,
 } = require('../controllers/authorityController');
 const { protect, authorize } = require('../middleware/auth');

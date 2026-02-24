@@ -45,12 +45,12 @@ function EvaluatingLoader() {
 }
 
 // ── Success screen ─────────────────────────────────────────────────────────
-function SuccessScreen({ trackingId }) {
+function SuccessScreen({ ticketId }) {
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
 
     const copy = () => {
-        navigator.clipboard.writeText(trackingId);
+        navigator.clipboard.writeText(ticketId);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -74,12 +74,12 @@ function SuccessScreen({ trackingId }) {
                 <h2 className="text-3xl font-black text-white mb-3">Your report has been submitted successfully.</h2>
                 <p className="text-slate-400 mb-8">Your grievance is now under review by the relevant authority.</p>
 
-                {/* Tracking ID */}
+                {/* Ticket ID */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
-                    <p className="text-sm text-slate-400 mb-2">Your Tracking ID</p>
+                    <p className="text-sm text-slate-400 mb-2">Your Ticket ID</p>
                     <div className="flex items-center justify-center gap-3">
                         <span className="font-mono text-3xl font-black text-blue-400 tracking-widest">
-                            {trackingId}
+                            {ticketId}
                         </span>
                         <button onClick={copy} className="p-2 rounded-lg hover:bg-white/10 transition text-slate-400 hover:text-white">
                             <Copy size={18} />
@@ -94,10 +94,10 @@ function SuccessScreen({ trackingId }) {
                         onClick={() => navigate('/track')}
                         className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition"
                     >
-                        Track Report
+                        Track Status
                     </button>
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/dashboard', { state: { newTicketId: ticketId } })}
                         className="flex-1 py-3 bg-white/8 hover:bg-white/12 text-white font-semibold rounded-xl border border-white/15 transition"
                     >
                         My Dashboard
@@ -156,7 +156,7 @@ export default function ComplaintForm() {
     const [pnrVerified, setPnrVerified] = useState(false);
     const [evaluating, setEvaluating] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [trackingId, setTrackingId] = useState(null);
+    const [ticketId, setTicketId] = useState(null);
 
     const setAnswer = (key, val) => setAnswers((prev) => ({ ...prev, [key]: val }));
 
@@ -250,7 +250,7 @@ export default function ComplaintForm() {
             });
 
             if (data.success) {
-                setTrackingId(data.trackingId);
+                setTicketId(data.ticketId);
                 toast.success('Report submitted!');
             } else {
                 toast.error(data.message || 'Submission failed.');
@@ -265,7 +265,7 @@ export default function ComplaintForm() {
     };
 
     // ── Render success ──────────────────────────────────────────────────────
-    if (trackingId) return <SuccessScreen trackingId={trackingId} />;
+    if (ticketId) return <SuccessScreen ticketId={ticketId} />;
 
     // ── Render evaluating overlay ───────────────────────────────────────────
     const progress = (step / TOTAL_STEPS) * 100;
@@ -512,8 +512,8 @@ export default function ComplaintForm() {
                                         onClick={handleVerifyPNR}
                                         disabled={answers.pnr.length !== 10 || pnrVerifying || pnrVerified}
                                         className={`w-full py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 ${pnrVerified
-                                                ? 'bg-emerald-600 text-white cursor-default'
-                                                : 'bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-slate-500 text-white'
+                                            ? 'bg-emerald-600 text-white cursor-default'
+                                            : 'bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-slate-500 text-white'
                                             }`}
                                     >
                                         {pnrVerifying ? (

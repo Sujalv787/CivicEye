@@ -3,14 +3,14 @@ const router = express.Router();
 const {
     createComplaint,
     getMyComplaints,
-    getComplaintByTrackingId,
+    getComplaintByTicketId,
 } = require('../controllers/complaintController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { complaintLimiter } = require('../middleware/rateLimiter');
 
-// Public: track by CIV-YYYY-XXXX tracking ID
-router.get('/track/:trackingId', getComplaintByTrackingId);
+// Public: track by CIV-YYYY-XXXX Ticket ID
+router.get('/track/:ticketId', getComplaintByTicketId);
 
 // Private: submit and view my complaints
 router.post('/', complaintLimiter, protect, upload.single('evidence'), createComplaint);

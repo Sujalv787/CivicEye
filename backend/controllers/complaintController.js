@@ -36,11 +36,17 @@ exports.createComplaint = async (req, res) => {
         // ── Evidence ──────────────────────────────────────────────────
         let evidence = {};
         if (req.file) {
+            const isLocal = !req.file.path.startsWith('http');
+            const port = process.env.PORT || 5000;
+            const fileUrl = isLocal
+                ? `http://localhost:${port}/uploads/${req.file.filename}`
+                : req.file.path;
+
             evidence = {
-                url: req.file.path,
-                publicId: req.file.filename,
+                url: fileUrl,
+                publicId: req.file.filename || '',
                 mimetype: req.file.mimetype,
-                thumbnail: req.file.path,
+                thumbnail: fileUrl,
             };
         }
 
@@ -68,7 +74,7 @@ exports.createComplaint = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: 'Complaint submitted successfully.',
-            trackingId: complaint.trackingId,
+            ticketId: complaint.ticketId,
             complaint: sanitizeComplaint(complaint),
         });
     } catch (err) {
@@ -97,19 +103,19 @@ exports.getMyComplaints = async (req, res) => {
     }
 };
 
-// @desc    Get complaint by trackingId (public tracking — CIV-YYYY-XXXX)
-// @route   GET /api/complaints/track/:trackingId
+// @desc    Get complaint by ticketId (public tracking — CIV-YYYY-XXXX)
+// @route   GET /api/complaints/track/:ticketId
 // @access  Public
-exports.getComplaintByTrackingId = async (req, res) => {
+exports.getComplaintByTicketId = async (req, res) => {
     try {
-        const complaint = await Complaint.findOne({ trackingId: req.params.trackingId })
-            .select('trackingId sourceStation destinationStation status complaintCategory complaintDegree createdAt statusHistory');
+        const complaint = await Complaint.findOne({ ticketId: req.params.ticketId })
+            .select('ticketId sourceStation destinationStation status complaintCategory complaintDegree createdAt statusHistory');
         if (!complaint) {
             return res.status(404).json({ success: false, message: 'Complaint not found.' });
         }
         res.json({ success: true, complaint });
     } catch (err) {
-        console.error('getComplaintByTrackingId error:', err);
+        console.error('getComplaintByTicketId error:', err);
         res.status(500).json({ success: false, message: 'Server error.' });
     }
 };

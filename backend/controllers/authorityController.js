@@ -3,9 +3,9 @@ const Complaint = require('../models/Complaint');
 const VALID_STATUSES = ['Under Review', 'Investigating', 'Action Taken', 'Resolved', 'Rejected'];
 
 // Fields that admin is ALLOWED to see (strict whitelist — no PNR)
-const ADMIN_SELECT = 'trackingId sourceStation destinationStation evidence complaintCategory complaintDegree complaintCategoryOther status statusHistory remarks createdAt type isAnonymous anonymousAlias';
+const ADMIN_SELECT = 'ticketId sourceStation destinationStation evidence complaintCategory complaintDegree complaintCategoryOther status statusHistory remarks createdAt type isAnonymous anonymousAlias';
 
-// @desc    List all complaints (filtered by status / search by trackingId)
+// @desc    List all complaints (filtered by status / search by ticketId)
 // @route   GET /api/authority/complaints
 // @access  Private (admin)
 exports.listComplaints = async (req, res) => {
@@ -22,7 +22,7 @@ exports.listComplaints = async (req, res) => {
 
         if (status && VALID_STATUSES.includes(status)) query.status = status;
         if (search) {
-            query.trackingId = { $regex: search.toUpperCase(), $options: 'i' };
+            query.ticketId = { $regex: search.toUpperCase(), $options: 'i' };
         }
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -88,7 +88,7 @@ exports.updateComplaintStatus = async (req, res) => {
         res.json({
             success: true,
             message: 'Status updated.',
-            trackingId: complaint.trackingId,
+            ticketId: complaint.ticketId,
             status: complaint.status,
         });
     } catch (err) {
@@ -97,10 +97,10 @@ exports.updateComplaintStatus = async (req, res) => {
     }
 };
 
-// @desc    Update complaint status by CIV tracking ID
-// @route   PUT /api/reports/update-status/:trackingId
+// @desc    Update complaint status by CIV Ticket ID
+// @route   PUT /api/reports/update-status/:ticketId
 // @access  Private (admin)
-exports.updateStatusByTrackingId = async (req, res) => {
+exports.updateStatusByTicketId = async (req, res) => {
     try {
         const { status, remark } = req.body;
 
@@ -108,7 +108,7 @@ exports.updateStatusByTrackingId = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid or missing status value.' });
         }
 
-        const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
+        const complaint = await Complaint.findOne({ ticketId: req.params.ticketId });
         if (!complaint) {
             return res.status(404).json({ success: false, message: 'Complaint not found.' });
         }
@@ -125,11 +125,11 @@ exports.updateStatusByTrackingId = async (req, res) => {
         res.json({
             success: true,
             message: 'Status updated successfully.',
-            trackingId: complaint.trackingId,
+            ticketId: complaint.ticketId,
             status: complaint.status,
         });
     } catch (err) {
-        console.error('updateStatusByTrackingId error:', err);
+        console.error('updateStatusByTicketId error:', err);
         res.status(500).json({ success: false, message: 'Server error.' });
     }
 };
