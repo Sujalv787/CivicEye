@@ -7,6 +7,7 @@ import {
     User, MapPin, Calendar, Clock, Tag, BarChart2, Upload,
     Hash, ArrowRight, ArrowLeft, CheckCircle, Train, AlertTriangle, Copy, Loader2
 } from 'lucide-react';
+import { useTrainLoader } from '../../context/TrainLoaderContext';
 
 // ── Q&A Step definitions ───────────────────────────────────────────────────
 const TOTAL_STEPS = 9;
@@ -132,6 +133,7 @@ const DEGREE_OPTIONS = [
 // ── Main component ──────────────────────────────────────────────────────────
 export default function ComplaintForm() {
     const navigate = useNavigate();
+    const { showLoader } = useTrainLoader();
     const fileRef = useRef();
 
     const [step, setStep] = useState(1);
@@ -250,8 +252,10 @@ export default function ComplaintForm() {
             });
 
             if (data.success) {
-                setTicketId(data.ticketId);
-                toast.success('Report submitted!');
+                showLoader(() => {
+                    setTicketId(data.ticketId);
+                    toast.success('Report submitted!');
+                });
             } else {
                 toast.error(data.message || 'Submission failed.');
             }

@@ -114,11 +114,13 @@ export default function LandingPage() {
     const { token } = useAuth();
 
     const handleGetStarted = () => {
-        if (!token) {
-            navigate('/login');
-        } else {
-            navigate('/dashboard');
-        }
+        showLoader(() => {
+            if (!token) {
+                navigate('/login');
+            } else {
+                navigate('/dashboard');
+            }
+        });
     };
 
     return (

@@ -41,8 +41,11 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Dat
 app.use('/api', (req, res) => res.status(404).json({ success: false, message: 'API route not found.' }));
 
 // All other GET requests not handled before will return the React app
-app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        return res.sendFile(path.join(frontendDistPath, 'index.html'));
+    }
+    next();
 });
 
 // Global error handler

@@ -6,7 +6,7 @@ import {
 
 const citizenLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/submit', label: 'Submit Report', icon: FileText },
+    { to: '/report', label: 'Submit Report', icon: FileText },
     { to: '/track', label: 'Track Complaint', icon: Search },
 ];
 
@@ -44,8 +44,8 @@ export default function Sidebar() {
             <div className="px-6 py-4 border-b border-slate-700">
                 <p className="text-sm font-medium truncate">{user?.name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${user?.role === 'citizen' ? 'bg-blue-800 text-blue-200' :
-                        user?.role === 'traffic_admin' ? 'bg-amber-800 text-amber-200' :
-                            'bg-emerald-800 text-emerald-200'
+                    user?.role === 'traffic_admin' ? 'bg-amber-800 text-amber-200' :
+                        'bg-emerald-800 text-emerald-200'
                     }`}>
                     {user?.role?.replace('_', ' ')}
                 </span>

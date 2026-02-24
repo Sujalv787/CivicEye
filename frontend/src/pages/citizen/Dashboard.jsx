@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTrainLoader } from '../../context/TrainLoaderContext';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +20,9 @@ const STATUS_STYLES = {
 
 export default function CitizenDashboard() {
     const { user } = useAuth();
+    const { showLoader } = useTrainLoader();
     const location = useLocation();
+    const navigate = useNavigate();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showBanner, setShowBanner] = useState(false);
@@ -140,12 +143,12 @@ export default function CitizenDashboard() {
                     <h1 className="text-2xl font-bold text-slate-900">Welcome, {user?.name} 👋</h1>
                     <p className="text-slate-500 text-sm mt-1">Here's an overview of your submitted reports.</p>
                 </div>
-                <Link
-                    to="/report"
+                <button
+                    onClick={() => showLoader(() => navigate('/report'))}
                     className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
                 >
                     <PlusCircle size={16} /> File a Report
-                </Link>
+                </button>
             </div>
 
             {/* Stat Cards */}
@@ -181,7 +184,7 @@ export default function CitizenDashboard() {
                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                         <FileText size={40} className="mb-3 opacity-30" />
                         <p className="text-sm">No reports submitted yet.</p>
-                        <Link to="/report" className="mt-3 text-sm text-blue-600 hover:underline">Submit your first report →</Link>
+                        <button onClick={() => showLoader(() => navigate('/report'))} className="mt-3 text-sm text-blue-600 hover:underline">Submit your first report →</button>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
